@@ -1,0 +1,6 @@
+name: messages
+version: 1
+title: Messages
+about: Text messages, as conversations
+publisher: arche
+needs: messaging contacts

@@ -1,0 +1,109 @@
+/// Messages, the Arche phone's text messages (docs/sprints.md T7 in
+/// arche-os), as Android's: the conversations, the latest first, each by
+/// its contact's name or its number over its last message; a tap opens
+/// one, its messages in order, and a message to write there, which Send
+/// sends. A new one is its number and text. An app of the phone's world:
+/// it may send and read messages (messaging) and read the contacts
+/// (contacts). A message that comes is the phone's notification, which
+/// opens this.
+import alloc;
+import contacts;
+import host_api;
+import messaging;
+import std;
+
+type Messages = struct {
+    /// The number of the conversation opened; empty for the list.
+    open: alloc.String,
+    number: alloc.String,
+    text: alloc.String,
+}
+
+fn init(host: &mut std.Host, a: alloc.Allocator) -> Messages {
+    return Messages { open: alloc.String.init(a), number: alloc.String.init(a), text: alloc.String.init(a) };
+}
+
+/// The name the contacts have for number; the number when they have none.
+fn who(all: &alloc.List(contacts.Contact), number: str, a: alloc.Allocator) -> alloc.String {
+    for c in all.items() {
+        if c.number.view().eq(number) {
+            return alloc.String.from(c.name.view(), a);
+        }
+    }
+    return alloc.String.from(number, a);
+}
+
+fn conversation(state: &mut Messages, host: &mut std.Host, all: &alloc.List(messaging.Message), people: &alloc.List(contacts.Contact), a: alloc.Allocator) {
+    let name = who(people, number: state.open.view(), a: a);
+    host_api.ui_heading(host, text: name.view(), level: 1);
+    for m in all.items() {
+        if m.number.view().eq(state.open.view()) {
+            var line = alloc.String.init(a);
+            if m.incoming {
+                line.push_str(name.view());
+            } else {
+                line.push_str("You");
+            }
+            line.push_str(": ");
+            line.push_str(m.text.view());
+            host_api.ui_label(host, text: line.view());
+        }
+    }
+    host_api.ui_separator(host);
+    state.text = host_api.ui_text_edit(host, text: state.text.view(), a: a);
+    host_api.ui_begin(host, kind: "row");
+    if host_api.ui_button(host, text: "Send") and state.text.len() > 0 {
+        messaging.send(host, number: state.open.view(), text: state.text.view());
+        state.text = alloc.String.init(a);
+    }
+    if host_api.ui_button(host, text: "Back") {
+        state.open = alloc.String.init(a);
+    }
+    host_api.ui_end(host);
+}
+
+fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
+    let all = messaging.list(host, a: a);
+    let people = contacts.list(host, a: a);
+    if state.open.len() > 0 {
+        conversation(state, host: host, all: &all, people: &people, a: a);
+        return;
+    }
+    host_api.ui_heading(host, text: "Messages", level: 1);
+    // The conversations, the latest first: the numbers, as their last
+    // messages come, from the end.
+    var seen = alloc.List(alloc.String).init(a);
+    var k = all.len();
+    while k > 0 {
+        k -= 1;
+        let m = &all.items()[k];
+        var again = false;
+        for s in seen.items() {
+            if s.view().eq(m.number.view()) {
+                again = true;
+            }
+        }
+        if again {
+            continue;
+        }
+        seen.push(alloc.String.from(m.number.view(), a));
+        let name = who(&people, number: m.number.view(), a: a);
+        if host_api.ui_tile(host, title: name.view(), subtitle: m.text.view()) {
+            state.open = alloc.String.from(m.number.view(), a);
+        }
+    }
+    if all.len() == 0 {
+        host_api.ui_label(host, text: "No messages yet");
+    }
+    host_api.ui_separator(host);
+    host_api.ui_heading(host, text: "New message", level: 2);
+    state.number = host_api.ui_text_edit(host, text: state.number.view(), a: a);
+    state.text = host_api.ui_text_edit(host, text: state.text.view(), a: a);
+    if host_api.ui_button(host, text: "Send") and state.number.len() > 0 and state.text.len() > 0 {
+        messaging.send(host, number: state.number.view(), text: state.text.view());
+        // As Android's: the conversation it went to.
+        state.open = alloc.String.from(state.number.view(), a);
+        state.number = alloc.String.init(a);
+        state.text = alloc.String.init(a);
+    }
+}

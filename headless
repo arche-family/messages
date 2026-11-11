@@ -1,0 +1,1 @@
+--frames 5 --input 1:0=+998901112233 --input 1:1=Salom --script 2:0 --add arche:phone/messaging@0.1.0#list=[] --add arche:phone/messaging@0.1.0#send --add arche:phone/contacts@0.1.0#list=[] --add arche:phone/contacts@0.1.0#save --add arche:phone/contacts@0.1.0#remove
