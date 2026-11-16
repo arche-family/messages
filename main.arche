@@ -1,26 +1,146 @@
-/// Messages, the Arche phone's text messages (docs/sprints.md T7 in
-/// arche-os), as Android's: the conversations, the latest first, each by
-/// its contact's name or its number over its last message; a tap opens
-/// one, its messages in order, and a message to write there, which Send
-/// sends. A new one is its number and text. An app of the phone's world:
-/// it may send and read messages (messaging) and read the contacts
-/// (contacts). A message that comes is the phone's notification, which
-/// opens this.
+/// Messages, the Arche phone's text messages (docs/sprints.md T7, T10 in
+/// arche-os), as a phone's: the conversations, the latest first, each by
+/// its contact's picture and name (or its number) over its last message;
+/// a tap opens one, its messages as bubbles, those that came at the left
+/// and those sent at the right in the accent, and along the bottom a
+/// message to write and Send. The round + starts a new one: its number,
+/// and the message. Its look is the phone's app kit (arche-lang's appkit).
+/// An app of the phone's world: it may send and read messages (messaging)
+/// and read the contacts (contacts). A message that comes is the phone's
+/// notification, which opens this.
 import alloc;
+import appkit;
 import contacts;
+import dom;
 import host_api;
 import messaging;
 import std;
 
+const SHEET: str = ".view { display: flex; flex-direction: column; flex-grow: 1; } .last { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .head .who { display: flex; flex-direction: row; align-items: center; gap: 10px; flex-grow: 1; padding-left: 4px; } .head .avatar { width: 34px; height: 34px; border-radius: 17px; font-size: 15px; } .head .left { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-grow: 1; } .bubbles { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 8px 14px; flex-grow: 1; } .bubble { max-width: 78%; padding: 10px 14px; border-radius: 18px; font-size: 16px; } .bubble.in { align-self: flex-start; background: var(--kit-card); color: var(--kit-text); } .bubble.out { align-self: flex-end; background: var(--kit-accent); color: #ffffff; } .to { padding-top: 6px; } .spacer { flex-grow: 1; } .hidden { display: none; }";
+
+const LIST: u32 = 0;
+const THREAD: u32 = 1;
+const NEW: u32 = 2;
+
 type Messages = struct {
-    /// The number of the conversation opened; empty for the list.
+    view: u32,
+    /// The number of the conversation opened.
     open: alloc.String,
+    /// What is typed: a reply, and a new message's number and text.
+    reply: alloc.String,
     number: alloc.String,
     text: alloc.String,
+    /// The page's nodes: the views, the list, what it says when empty, the
+    /// +, the conversation's head and bubbles, and the fields.
+    views: [3]u32,
+    list: u32,
+    empty: u32,
+    fab: u32,
+    who: u32,
+    bubbles: u32,
+    reply_field: u32,
+    number_field: u32,
+    text_field: u32,
+    /// What the pages were made from, to make them again when it changes.
+    seen: i64,
 }
 
 fn init(host: &mut std.Host, a: alloc.Allocator) -> Messages {
-    return Messages { open: alloc.String.init(a), number: alloc.String.init(a), text: alloc.String.init(a) };
+    let kit = appkit.css(a);
+    _ = dom.add_stylesheet(host, css: kit.view());
+    _ = dom.add_stylesheet(host, css: SHEET);
+    let markup = "<div class='app'><div class='content'><div class='view'><div class='big'>Messages</div><div class='group list'></div><div class='empty none'><span class='icon'>chat_bubble</span><div>No messages yet</div></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='back'><span class='icon'>arrow_back</span></button><div class='who'></div></div></div><div class='bubbles'></div><div class='compose'><input class='reply' placeholder='Message'><button class='send' data-k='reply'><span class='icon fill'>send</span></button></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='close'><span class='icon'>close</span></button><div class='title'>New message</div></div></div><div class='group to'><div class='row'><div class='tile' style='background: #2db55d'><span class='icon fill'>person</span></div><input class='number' placeholder='Phone number'></div></div><div class='spacer'></div><div class='compose'><input class='text' placeholder='Message'><button class='send' data-k='send'><span class='icon fill'>send</span></button></div></div></div><button class='fab' data-k='new'><span class='icon'>add</span></button></div>";
+    var why = alloc.String.init(a);
+    if not dom.set_markup(host, item: dom.root(host), markup: markup, why: &mut why, a: a) {
+        host_api.log(host, msg: why.view());
+    }
+    let app = first(host, selector: ".app", a: a);
+    dom.listen(host, item: app, kind: "click");
+    dom.listen(host, item: app, kind: "input");
+    let views = dom.query_all(host, scope: dom.root(host), selector: ".view", a: a);
+    var state = Messages {
+        view: LIST,
+        open: alloc.String.init(a),
+        reply: alloc.String.init(a),
+        number: alloc.String.init(a),
+        text: alloc.String.init(a),
+        views: [views.items()[0], views.items()[1], views.items()[2]],
+        list: first(host, selector: ".list", a: a),
+        empty: first(host, selector: ".none", a: a),
+        fab: first(host, selector: ".fab", a: a),
+        who: first(host, selector: ".who", a: a),
+        bubbles: first(host, selector: ".bubbles", a: a),
+        reply_field: first(host, selector: ".reply", a: a),
+        number_field: first(host, selector: ".number", a: a),
+        text_field: first(host, selector: ".text", a: a),
+        seen: -1,
+    };
+    refresh(&mut state, host: host, a: a);
+    return state;
+}
+
+fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
+    for e in dom.events(host, a: a).items() {
+        if e.kind.view().eq("click") {
+            match key_of(host, n: e.target, a: a) {
+                some(k) => { press(state, host: host, k: k.view(), a: a); }
+                none => { }
+            }
+        } else if e.kind.view().eq("input") {
+            if e.target == state.reply_field {
+                state.reply = alloc.String.from(e.value.view(), a);
+            } else if e.target == state.number_field {
+                state.number = alloc.String.from(e.value.view(), a);
+            } else if e.target == state.text_field {
+                state.text = alloc.String.from(e.value.view(), a);
+            }
+        }
+    }
+    refresh(state, host: host, a: a);
+}
+
+fn press(state: &mut Messages, host: &mut std.Host, k: str, a: alloc.Allocator) {
+    if k.eq("new") {
+        state.number = alloc.String.init(a);
+        state.text = alloc.String.init(a);
+        dom.set_attribute(host, item: state.number_field, name: "value", value_: "");
+        dom.set_attribute(host, item: state.text_field, name: "value", value_: "");
+        show(state, host: host, view: NEW);
+    } else if k.eq("back") or k.eq("close") {
+        show(state, host: host, view: LIST);
+    } else if k.starts_with("open:") {
+        state.open = alloc.String.from(k[5..k.len()], a);
+        state.seen = -1;
+        show(state, host: host, view: THREAD);
+    } else if k.eq("reply") {
+        if state.reply.len() > 0 {
+            messaging.send(host, number: state.open.view(), text: state.reply.view());
+            state.reply = alloc.String.init(a);
+            dom.set_attribute(host, item: state.reply_field, name: "value", value_: "");
+            state.seen = -1;
+        }
+    } else if k.eq("send") {
+        if state.number.len() > 0 and state.text.len() > 0 {
+            messaging.send(host, number: state.number.view(), text: state.text.view());
+            // As a phone's: the conversation it went to.
+            state.open = alloc.String.from(state.number.view(), a);
+            state.number = alloc.String.init(a);
+            state.text = alloc.String.init(a);
+            dom.set_attribute(host, item: state.number_field, name: "value", value_: "");
+            dom.set_attribute(host, item: state.text_field, name: "value", value_: "");
+            state.seen = -1;
+            show(state, host: host, view: THREAD);
+        }
+    }
+}
+
+fn show(state: &mut Messages, host: &mut std.Host, view: u32) {
+    state.view = view;
+    var k: usize = 0;
+    while k < 3 : (k += 1) {
+        dom.toggle_class(host, item: state.views[k], name: "hidden", on: k as u32 != view);
+    }
+    dom.toggle_class(host, item: state.fab, name: "hidden", on: view != LIST);
 }
 
 /// The name the contacts have for number; the number when they have none.
@@ -33,46 +153,33 @@ fn who(all: &alloc.List(contacts.Contact), number: str, a: alloc.Allocator) -> a
     return alloc.String.from(number, a);
 }
 
-fn conversation(state: &mut Messages, host: &mut std.Host, all: &alloc.List(messaging.Message), people: &alloc.List(contacts.Contact), a: alloc.Allocator) {
-    let name = who(people, number: state.open.view(), a: a);
-    host_api.ui_heading(host, text: name.view(), level: 1);
-    for m in all.items() {
-        if m.number.view().eq(state.open.view()) {
-            var line = alloc.String.init(a);
-            if m.incoming {
-                line.push_str(name.view());
-            } else {
-                line.push_str("You");
-            }
-            line.push_str(": ");
-            line.push_str(m.text.view());
-            host_api.ui_label(host, text: line.view());
-        }
-    }
-    host_api.ui_separator(host);
-    state.text = host_api.ui_text_edit(host, text: state.text.view(), a: a);
-    host_api.ui_begin(host, kind: "row");
-    if host_api.ui_button(host, text: "Send") and state.text.len() > 0 {
-        messaging.send(host, number: state.open.view(), text: state.text.view());
-        state.text = alloc.String.init(a);
-    }
-    if host_api.ui_button(host, text: "Back") {
-        state.open = alloc.String.init(a);
-    }
-    host_api.ui_end(host);
+/// A picture: name's first letter on its color.
+fn avatar(out: &mut alloc.String, name: str, a: alloc.Allocator) {
+    out.push_str("<div class='avatar' style='background: ");
+    out.push_str(appkit.avatar_color(name));
+    out.push_str("'>");
+    let l = appkit.initial(name, a: a);
+    appkit.escaped(out, s: l.view());
+    out.push_str("</div>");
 }
 
-fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
+/// The list and the conversation opened, made again when the messages or
+/// the contacts changed.
+fn refresh(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
     let all = messaging.list(host, a: a);
     let people = contacts.list(host, a: a);
-    if state.open.len() > 0 {
-        conversation(state, host: host, all: &all, people: &people, a: a);
+    var mark = all.len() as i64 * 1000003 + people.len() as i64;
+    if all.len() > 0 {
+        mark = mark * 31 + all.items()[all.len() - 1].text.len() as i64;
+    }
+    if mark == state.seen {
         return;
     }
-    host_api.ui_heading(host, text: "Messages", level: 1);
+    state.seen = mark;
     // The conversations, the latest first: the numbers, as their last
     // messages come, from the end.
     var seen = alloc.List(alloc.String).init(a);
+    var rows = alloc.String.init(a);
     var k = all.len();
     while k > 0 {
         k -= 1;
@@ -88,22 +195,73 @@ fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
         }
         seen.push(alloc.String.from(m.number.view(), a));
         let name = who(&people, number: m.number.view(), a: a);
-        if host_api.ui_tile(host, title: name.view(), subtitle: m.text.view()) {
-            state.open = alloc.String.from(m.number.view(), a);
+        rows.push_str("<button class='row' data-k='open:");
+        appkit.escaped(&mut rows, s: m.number.view());
+        rows.push_str("'>");
+        avatar(&mut rows, name: name.view(), a: a);
+        rows.push_str("<div class='lines'><div class='primary'>");
+        appkit.escaped(&mut rows, s: name.view());
+        rows.push_str("</div><div class='secondary last'>");
+        if not m.incoming {
+            rows.push_str("You: ");
+        }
+        appkit.escaped(&mut rows, s: m.text.view());
+        rows.push_str("</div></div></button>");
+    }
+    var why = alloc.String.init(a);
+    if not dom.set_markup(host, item: state.list, markup: rows.view(), why: &mut why, a: a) {
+        host_api.log(host, msg: why.view());
+    }
+    dom.toggle_class(host, item: state.list, name: "hidden", on: all.len() == 0);
+    dom.toggle_class(host, item: state.empty, name: "hidden", on: all.len() > 0);
+    // The conversation opened: who, and its messages in order.
+    var head = alloc.String.init(a);
+    var bubbles = alloc.String.init(a);
+    if state.open.len() > 0 {
+        let name = who(&people, number: state.open.view(), a: a);
+        avatar(&mut head, name: name.view(), a: a);
+        head.push_str("<div class='title'>");
+        appkit.escaped(&mut head, s: name.view());
+        head.push_str("</div>");
+        for m in all.items() {
+            if m.number.view().eq(state.open.view()) {
+                if m.incoming {
+                    bubbles.push_str("<div class='bubble in'>");
+                } else {
+                    bubbles.push_str("<div class='bubble out'>");
+                }
+                appkit.escaped(&mut bubbles, s: m.text.view());
+                bubbles.push_str("</div>");
+            }
         }
     }
-    if all.len() == 0 {
-        host_api.ui_label(host, text: "No messages yet");
+    if not dom.set_markup(host, item: state.who, markup: head.view(), why: &mut why, a: a) {
+        host_api.log(host, msg: why.view());
     }
-    host_api.ui_separator(host);
-    host_api.ui_heading(host, text: "New message", level: 2);
-    state.number = host_api.ui_text_edit(host, text: state.number.view(), a: a);
-    state.text = host_api.ui_text_edit(host, text: state.text.view(), a: a);
-    if host_api.ui_button(host, text: "Send") and state.number.len() > 0 and state.text.len() > 0 {
-        messaging.send(host, number: state.number.view(), text: state.text.view());
-        // As Android's: the conversation it went to.
-        state.open = alloc.String.from(state.number.view(), a);
-        state.number = alloc.String.init(a);
-        state.text = alloc.String.init(a);
+    if not dom.set_markup(host, item: state.bubbles, markup: bubbles.view(), why: &mut why, a: a) {
+        host_api.log(host, msg: why.view());
     }
+}
+
+/// The first node under the page that selector finds; 0 for none.
+fn first(host: &mut std.Host, selector: str, a: alloc.Allocator) -> u32 {
+    let found = dom.query_all(host, scope: dom.root(host), selector: selector, a: a);
+    if found.len() == 0 {
+        return 0;
+    }
+    return found.items()[0];
+}
+
+/// The key a click on n is: its data-k, or its nearest ancestor's.
+fn key_of(host: &mut std.Host, n: u32, a: alloc.Allocator) -> ?alloc.String {
+    var at = n;
+    var hops: u32 = 0;
+    while at != 0 and hops < 8 : (hops += 1) {
+        match dom.get_attribute(host, item: at, name: "data-k", a: a) {
+            some(k) => { return k; }
+            none => { }
+        }
+        at = dom.parent(host, item: at) orelse 0;
+    }
+    return none;
 }

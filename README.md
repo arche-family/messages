@@ -21,7 +21,7 @@ With [arche-lang](https://github.com/arche-family/arche-lang) checked out next t
 
 ## Test
 
-`headless` holds a headless run's input (a number and a text typed, and Send) and the functions the phone's world adds, and `expected.txt` what arche-wasm's interpreter said to them, as Nimadir's shell does not run the phone's world. `app-check.sh` runs the app with arche-wasm, by the interpreter and by the JIT, and compares what it says with `expected.txt`; CI runs it when started by hand (Actions' Run workflow). Messages on the phone itself, through its modem, are tried by arche-os's `tests/phone.sh`.
+`headless` holds a headless run's taps and typing (the round + opens a new message, a number and a text typed, Send, which opens its conversation; then Back) and the functions the phone's world adds, and `expected.txt` what arche-wasm's interpreter said to them, as Nimadir's shell does not run the phone's world. `app-check.sh` runs the app with arche-wasm, by the interpreter and by the JIT, and compares what it says with `expected.txt`; CI runs it when started by hand (Actions' Run workflow). Messages on the phone itself, through its modem, are tried by arche-os's `tests/phone.sh`.
 
 ```sh
 ../arche-lang/wasm/app-check.sh .

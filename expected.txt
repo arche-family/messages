@@ -1,57 +1,335 @@
-=== headless run: 5 frames ===
+=== headless run: 6 frames ===
 
 --- frame 0  (clicks fed to guest: []) ---
-   heading1 : "Messages"
-   label   : "No messages yet"
-   ----
-   heading2 : "New message"
-   field0  : ""
-   field1  : ""
-   button0 : "Send"
+   [page] 48 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view.hidden
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view.hidden
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value=""
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value=""
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab [data-k="new"]
+         #47 span.icon
+           #48 "add"
+   [call] arche:phone/messaging@0.1.0#list()
+   [call] arche:phone/contacts@0.1.0#list()
    [call] arche:phone/messaging@0.1.0#list()
    [call] arche:phone/contacts@0.1.0#list()
 
 --- frame 1  (clicks fed to guest: []) ---
-   heading1 : "Messages"
-   label   : "No messages yet"
-   ----
-   heading2 : "New message"
-   field0  : "+998901112233"
-   field1  : "Salom"
-   button0 : "Send"
+   [tap] #46
+   [page] 48 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view.hidden
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view.hidden
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value=""
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value=""
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab.hidden [data-k="new"]
+         #47 span.icon
+           #48 "add"
    [call] arche:phone/messaging@0.1.0#list()
    [call] arche:phone/contacts@0.1.0#list()
 
---- frame 2  (clicks fed to guest: [0]) ---
-   heading1 : "Messages"
-   label   : "No messages yet"
-   ----
-   heading2 : "New message"
-   field0  : "+998901112233"
-   field1  : "Salom"
-   button0 : "Send"
+--- frame 2  (clicks fed to guest: []) ---
+   [type] #39 = "+998901112233"
+   [page] 48 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view.hidden
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view.hidden
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value="+998901112233"
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value=""
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab.hidden [data-k="new"]
+         #47 span.icon
+           #48 "add"
    [call] arche:phone/messaging@0.1.0#list()
    [call] arche:phone/contacts@0.1.0#list()
-   [call] arche:phone/messaging@0.1.0#send("+998901112233", "Salom")
 
 --- frame 3  (clicks fed to guest: []) ---
-   heading1 : "+998901112233"
-   ----
-   field0  : ""
-   begin row#0
-     button0 : "Send"
-     button1 : "Back"
-   end
+   [type] #42 = "Salom"
+   [page] 48 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view.hidden
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view.hidden
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value="+998901112233"
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value="Salom"
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab.hidden [data-k="new"]
+         #47 span.icon
+           #48 "add"
    [call] arche:phone/messaging@0.1.0#list()
    [call] arche:phone/contacts@0.1.0#list()
 
 --- frame 4  (clicks fed to guest: []) ---
-   heading1 : "+998901112233"
-   ----
-   field0  : ""
-   begin row#0
-     button0 : "Send"
-     button1 : "Back"
-   end
+   [tap] #43
+   [page] 52 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view.hidden
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+                 #49 div.avatar [style="background: #00a6a6"]
+                   #50 "#"
+                 #51 div.title
+                   #52 "+998901112233"
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view.hidden
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value=""
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value=""
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab.hidden [data-k="new"]
+         #47 span.icon
+           #48 "add"
+   [call] arche:phone/messaging@0.1.0#send("+998901112233", "Salom")
+   [call] arche:phone/messaging@0.1.0#list()
+   [call] arche:phone/contacts@0.1.0#list()
+
+--- frame 5  (clicks fed to guest: []) ---
+   [tap] #16
+   [page] 52 nodes
+   #1 body
+     #2 div.app {click input}
+       #3 div.content
+         #4 div.view
+           #5 div.big
+             #6 "Messages"
+           #7 div.group.list.hidden
+           #8 div.empty.none
+             #9 span.icon
+               #10 "chat_bubble"
+             #11 div
+               #12 "No messages yet"
+         #13 div.view.hidden
+           #14 div.head
+             #15 div.left
+               #16 button.iconbtn [data-k="back"]
+                 #17 span.icon
+                   #18 "arrow_back"
+               #19 div.who
+                 #49 div.avatar [style="background: #00a6a6"]
+                   #50 "#"
+                 #51 div.title
+                   #52 "+998901112233"
+           #20 div.bubbles
+           #21 div.compose
+             #22 input.reply [placeholder="Message"] value=""
+             #23 button.send [data-k="reply"]
+               #24 span.icon.fill
+                 #25 "send"
+         #26 div.view.hidden
+           #27 div.head
+             #28 div.left
+               #29 button.iconbtn [data-k="close"]
+                 #30 span.icon
+                   #31 "close"
+               #32 div.title
+                 #33 "New message"
+           #34 div.group.to
+             #35 div.row
+               #36 div.tile [style="background: #2db55d"]
+                 #37 span.icon.fill
+                   #38 "person"
+               #39 input.number [placeholder="Phone number"] value=""
+           #40 div.spacer
+           #41 div.compose
+             #42 input.text [placeholder="Message"] value=""
+             #43 button.send [data-k="send"]
+               #44 span.icon.fill
+                 #45 "send"
+       #46 button.fab [data-k="new"]
+         #47 span.icon
+           #48 "add"
    [call] arche:phone/messaging@0.1.0#list()
    [call] arche:phone/contacts@0.1.0#list()
