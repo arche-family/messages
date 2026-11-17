@@ -7,7 +7,11 @@
 /// and the message. Its look is the phone's app kit (arche-lang's appkit).
 /// An app of the phone's world: it may send and read messages (messaging)
 /// and read the contacts (contacts). A message that comes is the phone's
-/// notification, which opens this.
+/// notification, which opens this. Opened for a number by another app
+/// ("messages.component.wasm?to=<number>", Contacts' Message, arche-os
+/// T12's intents), it opens that conversation, to write in. It says its
+/// words in the phone's language (host_api.locale): English, Uzbek or
+/// Russian, the page made again when the language changes.
 import alloc;
 import appkit;
 import contacts;
@@ -21,6 +25,11 @@ const SHEET: str = ".view { display: flex; flex-direction: column; flex-grow: 1;
 const LIST: u32 = 0;
 const THREAD: u32 = 1;
 const NEW: u32 = 2;
+
+/// The languages the app speaks.
+const EN: u32 = 0;
+const UZ: u32 = 1;
+const RU: u32 = 2;
 
 type Messages = struct {
     view: u32,
@@ -43,41 +52,141 @@ type Messages = struct {
     text_field: u32,
     /// What the pages were made from, to make them again when it changes.
     seen: i64,
+    /// The phone's language (EN, UZ, RU), and its locale as the phone said
+    /// it, to make the page again when it changes.
+    lang: u32,
+    locale: alloc.String,
 }
 
 fn init(host: &mut std.Host, a: alloc.Allocator) -> Messages {
     let kit = appkit.css(a);
     _ = dom.add_stylesheet(host, css: kit.view());
     _ = dom.add_stylesheet(host, css: SHEET);
-    let markup = "<div class='app'><div class='content'><div class='view'><div class='big'>Messages</div><div class='group list'></div><div class='empty none'><span class='icon'>chat_bubble</span><div>No messages yet</div></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='back'><span class='icon'>arrow_back</span></button><div class='who'></div></div></div><div class='bubbles'></div><div class='compose'><input class='reply' placeholder='Message'><button class='send' data-k='reply'><span class='icon fill'>send</span></button></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='close'><span class='icon'>close</span></button><div class='title'>New message</div></div></div><div class='group to'><div class='row'><div class='tile' style='background: #2db55d'><span class='icon fill'>person</span></div><input class='number' placeholder='Phone number'></div></div><div class='spacer'></div><div class='compose'><input class='text' placeholder='Message'><button class='send' data-k='send'><span class='icon fill'>send</span></button></div></div></div><button class='fab' data-k='new'><span class='icon'>add</span></button></div>";
-    var why = alloc.String.init(a);
-    if not dom.set_markup(host, item: dom.root(host), markup: markup, why: &mut why, a: a) {
-        host_api.log(host, msg: why.view());
-    }
-    let app = first(host, selector: ".app", a: a);
-    dom.listen(host, item: app, kind: "click");
-    dom.listen(host, item: dom.root(host), kind: "back");
-    dom.listen(host, item: app, kind: "input");
-    let views = dom.query_all(host, scope: dom.root(host), selector: ".view", a: a);
+    let locale = host_api.locale(host, a: a);
     var state = Messages {
         view: LIST,
         open: alloc.String.init(a),
         reply: alloc.String.init(a),
         number: alloc.String.init(a),
         text: alloc.String.init(a),
-        views: [views.items()[0], views.items()[1], views.items()[2]],
-        list: first(host, selector: ".list", a: a),
-        empty: first(host, selector: ".none", a: a),
-        fab: first(host, selector: ".fab", a: a),
-        who: first(host, selector: ".who", a: a),
-        bubbles: first(host, selector: ".bubbles", a: a),
-        reply_field: first(host, selector: ".reply", a: a),
-        number_field: first(host, selector: ".number", a: a),
-        text_field: first(host, selector: ".text", a: a),
+        views: [0, 0, 0],
+        list: 0,
+        empty: 0,
+        fab: 0,
+        who: 0,
+        bubbles: 0,
+        reply_field: 0,
+        number_field: 0,
+        text_field: 0,
         seen: -1,
+        lang: lang_of(locale.view()),
+        locale: alloc.String.from(locale.view(), a),
     };
+    page(&mut state, host: host, a: a);
     refresh(&mut state, host: host, a: a);
     return state;
+}
+
+/// The page, in the phone's language: its markup made, and its nodes.
+fn page(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
+    let l = state.lang;
+    var m = alloc.String.from("<div class='app'><div class='content'><div class='view'><div class='big'>", a);
+    m.push_str(say(l, s: "Messages"));
+    m.push_str("</div><div class='group list'></div><div class='empty none'><span class='icon'>chat_bubble</span><div>");
+    m.push_str(say(l, s: "No messages yet"));
+    m.push_str("</div></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='back'><span class='icon'>arrow_back</span></button><div class='who'></div></div></div><div class='bubbles'></div><div class='compose'><input class='reply' placeholder='");
+    m.push_str(say(l, s: "Message"));
+    m.push_str("'><button class='send' data-k='reply'><span class='icon fill'>send</span></button></div></div><div class='view hidden'><div class='head'><div class='left'><button class='iconbtn' data-k='close'><span class='icon'>close</span></button><div class='title'>");
+    m.push_str(say(l, s: "New message"));
+    m.push_str("</div></div></div><div class='group to'><div class='row'><div class='tile' style='background: #2db55d'><span class='icon fill'>person</span></div><input class='number' type='tel' inputmode='tel' placeholder='");
+    m.push_str(say(l, s: "Phone number"));
+    m.push_str("'></div></div><div class='spacer'></div><div class='compose'><input class='text' placeholder='");
+    m.push_str(say(l, s: "Message"));
+    m.push_str("'><button class='send' data-k='send'><span class='icon fill'>send</span></button></div></div></div><button class='fab' data-k='new'><span class='icon'>add</span></button></div>");
+    var why = alloc.String.init(a);
+    if not dom.set_markup(host, item: dom.root(host), markup: m.view(), why: &mut why, a: a) {
+        host_api.log(host, msg: why.view());
+    }
+    let app = first(host, selector: ".app", a: a);
+    dom.listen(host, item: app, kind: "click");
+    dom.listen(host, item: dom.root(host), kind: "back");
+    dom.listen(host, item: dom.root(host), kind: "open");
+    dom.listen(host, item: app, kind: "input");
+    let views = dom.query_all(host, scope: dom.root(host), selector: ".view", a: a);
+    state.views = [views.items()[0], views.items()[1], views.items()[2]];
+    state.list = first(host, selector: ".list", a: a);
+    state.empty = first(host, selector: ".none", a: a);
+    state.fab = first(host, selector: ".fab", a: a);
+    state.who = first(host, selector: ".who", a: a);
+    state.bubbles = first(host, selector: ".bubbles", a: a);
+    state.reply_field = first(host, selector: ".reply", a: a);
+    state.number_field = first(host, selector: ".number", a: a);
+    state.text_field = first(host, selector: ".text", a: a);
+}
+
+/// The language of a locale the phone says ("uz-UZ", "ru-RU", "en-US").
+fn lang_of(locale: str) -> u32 {
+    if locale.starts_with("uz") {
+        return UZ;
+    }
+    if locale.starts_with("ru") {
+        return RU;
+    }
+    return EN;
+}
+
+/// s, a word or words of the app's in English, in lang: s itself in
+/// English, and for what it has no words for.
+fn say(lang: u32, s: str) -> str {
+    if s.eq("Messages") {
+        if lang == UZ {
+            return "Xabarlar";
+        }
+        if lang == RU {
+            return "Сообщения";
+        }
+    }
+    if s.eq("No messages yet") {
+        if lang == UZ {
+            return "Hali xabarlar yoʻq";
+        }
+        if lang == RU {
+            return "Сообщений пока нет";
+        }
+    }
+    if s.eq("Message") {
+        if lang == UZ {
+            return "Xabar";
+        }
+        if lang == RU {
+            return "Сообщение";
+        }
+    }
+    if s.eq("New message") {
+        if lang == UZ {
+            return "Yangi xabar";
+        }
+        if lang == RU {
+            return "Новое сообщение";
+        }
+    }
+    if s.eq("Phone number") {
+        if lang == UZ {
+            return "Telefon raqami";
+        }
+        if lang == RU {
+            return "Номер телефона";
+        }
+    }
+    if s.eq("You: ") {
+        if lang == UZ {
+            return "Siz: ";
+        }
+        if lang == RU {
+            return "Вы: ";
+        }
+    }
+    return s;
 }
 
 fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
@@ -85,6 +194,13 @@ fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
         if e.kind.view().eq("back") {
             // The phone's Back, on a page of the app's own: to the list.
             press(state, host: host, k: "back", a: a);
+        } else if e.kind.view().eq("open") and e.value.view().starts_with("to=") and e.value.len() > 3 {
+            // Opened to write to a number: its conversation.
+            let number = e.value.view()[3..e.value.len()];
+            var key = alloc.String.from("open:", a);
+            key.push_str(number);
+            press(state, host: host, k: key.view(), a: a);
+            dom.focus(host, item: state.reply_field);
         } else if e.kind.view().eq("click") {
             match key_of(host, n: e.target, a: a) {
                 some(k) => { press(state, host: host, k: k.view(), a: a); }
@@ -99,6 +215,20 @@ fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
                 state.text = alloc.String.from(e.value.view(), a);
             }
         }
+    }
+    // The phone's language changed: the page made again in it, at the view
+    // it was at, with what was typed.
+    let locale = host_api.locale(host, a: a);
+    if not locale.view().eq(state.locale.view()) {
+        state.lang = lang_of(locale.view());
+        state.locale = alloc.String.from(locale.view(), a);
+        page(state, host: host, a: a);
+        dom.set_attribute(host, item: state.reply_field, name: "value", value_: state.reply.view());
+        dom.set_attribute(host, item: state.number_field, name: "value", value_: state.number.view());
+        dom.set_attribute(host, item: state.text_field, name: "value", value_: state.text.view());
+        let at = state.view;
+        show(state, host: host, view: at);
+        state.seen = -1;
     }
     refresh(state, host: host, a: a);
 }
@@ -214,7 +344,7 @@ fn refresh(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
         appkit.escaped(&mut rows, s: name.view());
         rows.push_str("</div><div class='secondary last'>");
         if not m.incoming {
-            rows.push_str("You: ");
+            rows.push_str(say(state.lang, s: "You: "));
         }
         appkit.escaped(&mut rows, s: m.text.view());
         rows.push_str("</div></div></button>");

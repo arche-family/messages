@@ -8,6 +8,9 @@ It works like Android's:
 - A conversation opened: its messages in order, a message to write, Send and Back.
 - A new message: its number and text, and Send, which opens its conversation.
 - A message that comes is the phone's notification, which opens Messages.
+- Opened by another app for a number (`messages.component.wasm?to=<number>`, as Contacts' Message opens it, the phone's intents), its conversation, to write in; the number's field of a new message asks for the dial pad (`type="tel"`).
+
+It speaks the phone's language (English, Uzbek or Russian, as `host-api`'s `locale` says) and makes its page again in the new one when the language changes; names, numbers and messages are shown as they are.
 
 `manifest` says what it may do: send and read text messages (`messaging`) and read the contacts (`contacts`).
 

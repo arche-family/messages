@@ -1,6 +1,10 @@
 name: messages
 version: 1
 title: Messages
-about: Text messages, as conversations
+about: Send and read text messages
+title.uz: Xabarlar
+about.uz: SMS yuborish va oʻqish
+title.ru: Сообщения
+about.ru: Отправка и чтение SMS
 publisher: arche
 needs: messaging contacts

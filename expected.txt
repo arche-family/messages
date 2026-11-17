@@ -2,7 +2,7 @@
 
 --- frame 0  (clicks fed to guest: []) ---
    [page] 48 nodes
-   #1 body {back}
+   #1 body {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view
@@ -40,7 +40,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value=""
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value=""
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value=""
@@ -58,7 +58,7 @@
 --- frame 1  (clicks fed to guest: []) ---
    [tap] #46
    [page] 48 nodes
-   #1 body [data-back="1"] {back}
+   #1 body [data-back="1"] {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -96,7 +96,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value=""
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value=""
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value=""
@@ -112,7 +112,7 @@
 --- frame 2  (clicks fed to guest: []) ---
    [type] #39 = "+998901112233"
    [page] 48 nodes
-   #1 body [data-back="1"] {back}
+   #1 body [data-back="1"] {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -150,7 +150,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value="+998901112233"
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value="+998901112233"
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value=""
@@ -166,7 +166,7 @@
 --- frame 3  (clicks fed to guest: []) ---
    [type] #42 = "Salom"
    [page] 48 nodes
-   #1 body [data-back="1"] {back}
+   #1 body [data-back="1"] {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -204,7 +204,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value="+998901112233"
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value="+998901112233"
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value="Salom"
@@ -220,7 +220,7 @@
 --- frame 4  (clicks fed to guest: []) ---
    [tap] #43
    [page] 52 nodes
-   #1 body [data-back="1"] {back}
+   #1 body [data-back="1"] {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -262,7 +262,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value=""
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value=""
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value=""
@@ -279,7 +279,7 @@
 --- frame 5  (clicks fed to guest: []) ---
    [tap] #16
    [page] 52 nodes
-   #1 body {back}
+   #1 body {back open}
      #2 div.app {click input}
        #3 div.content
          #4 div.view
@@ -321,7 +321,7 @@
                #36 div.tile [style="background: #2db55d"]
                  #37 span.icon.fill
                    #38 "person"
-               #39 input.number [placeholder="Phone number"] value=""
+               #39 input.number [type="tel" inputmode="tel" placeholder="Phone number"] value=""
            #40 div.spacer
            #41 div.compose
              #42 input.text [placeholder="Message"] value=""
