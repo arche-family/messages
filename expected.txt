@@ -2,7 +2,7 @@
 
 --- frame 0  (clicks fed to guest: []) ---
    [page] 48 nodes
-   #1 body
+   #1 body {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view
@@ -58,7 +58,7 @@
 --- frame 1  (clicks fed to guest: []) ---
    [tap] #46
    [page] 48 nodes
-   #1 body
+   #1 body [data-back="1"] {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -112,7 +112,7 @@
 --- frame 2  (clicks fed to guest: []) ---
    [type] #39 = "+998901112233"
    [page] 48 nodes
-   #1 body
+   #1 body [data-back="1"] {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -166,7 +166,7 @@
 --- frame 3  (clicks fed to guest: []) ---
    [type] #42 = "Salom"
    [page] 48 nodes
-   #1 body
+   #1 body [data-back="1"] {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -220,7 +220,7 @@
 --- frame 4  (clicks fed to guest: []) ---
    [tap] #43
    [page] 52 nodes
-   #1 body
+   #1 body [data-back="1"] {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view.hidden
@@ -279,7 +279,7 @@
 --- frame 5  (clicks fed to guest: []) ---
    [tap] #16
    [page] 52 nodes
-   #1 body
+   #1 body {back}
      #2 div.app {click input}
        #3 div.content
          #4 div.view

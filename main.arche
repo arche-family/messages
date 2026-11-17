@@ -56,6 +56,7 @@ fn init(host: &mut std.Host, a: alloc.Allocator) -> Messages {
     }
     let app = first(host, selector: ".app", a: a);
     dom.listen(host, item: app, kind: "click");
+    dom.listen(host, item: dom.root(host), kind: "back");
     dom.listen(host, item: app, kind: "input");
     let views = dom.query_all(host, scope: dom.root(host), selector: ".view", a: a);
     var state = Messages {
@@ -81,7 +82,10 @@ fn init(host: &mut std.Host, a: alloc.Allocator) -> Messages {
 
 fn update(state: &mut Messages, host: &mut std.Host, a: alloc.Allocator) {
     for e in dom.events(host, a: a).items() {
-        if e.kind.view().eq("click") {
+        if e.kind.view().eq("back") {
+            // The phone's Back, on a page of the app's own: to the list.
+            press(state, host: host, k: "back", a: a);
+        } else if e.kind.view().eq("click") {
             match key_of(host, n: e.target, a: a) {
                 some(k) => { press(state, host: host, k: k.view(), a: a); }
                 none => { }
@@ -141,6 +145,13 @@ fn show(state: &mut Messages, host: &mut std.Host, view: u32) {
         dom.toggle_class(host, item: state.views[k], name: "hidden", on: k as u32 != view);
     }
     dom.toggle_class(host, item: state.fab, name: "hidden", on: view != LIST);
+    // Off the list, the phone's Back is the page's (data-back), as an
+    // Android app's is while it has a page to go back from.
+    if view == LIST {
+        dom.remove_attribute(host, item: dom.root(host), name: "data-back");
+    } else {
+        dom.set_attribute(host, item: dom.root(host), name: "data-back", value_: "1");
+    }
 }
 
 /// The name the contacts have for number; the number when they have none.
